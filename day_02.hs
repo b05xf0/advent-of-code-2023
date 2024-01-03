@@ -30,8 +30,7 @@ stock color set = case lookup color set of
 parseGame :: String -> Game
 parseGame src = (read gameIdSrc, parseSet <$> splitOn ';' setsSrc)
   where
-    (heading, (':':setsSrc)) = span (/=':') src
-    [_, gameIdSrc] = words heading
+    (_:_:_:_:_:gameIdSrc, _:setsSrc) = span (/=':') src
 
 parseSet :: String -> [Cube]
 parseSet src = parseCube <$> splitOn ',' src
