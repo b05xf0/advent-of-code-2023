@@ -1,5 +1,3 @@
-import Data.Char ( toUpper )
-
 main :: IO ()
 main = do
   doc <- readFile "day_02_input.txt"
