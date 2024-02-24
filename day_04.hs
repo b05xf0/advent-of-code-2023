@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -Wno-overlapping-patterns #-}
 import Data.List ( intersect )
 
 type Card = ([Int], [Int])
@@ -6,28 +5,36 @@ type Card = ([Int], [Int])
 main :: IO ()
 main = do
   cards <- parse <$> readFile "day_04_input.txt"
-  print $ sum $ calcPoints . snd <$> cards
-  print $ sum $ fst <$> process cards
-  print $ process cards
+  putStrLn $ "d04p1: " <> show (sum $ calcPoints . snd <$> cards)
+  putStrLn $ "d04p2: " <> show (sum $ fst <$> process cards)
 
-parse :: String -> [(Integer, Card)]
-parse raw = (1, ) . mkCard . extractNumbers <$> lines raw
+parse :: String -> [(Int, Card)]
+parse raw = (1, ) . mkCard . split <$> lines raw
   where
-    extractNumbers line = break (== '|') $ dropWhile (/= ':') line
-    mkCard (':':ns1, '|':ns2) = (read <$> words ns1, read <$> words ns2)
+    split line = break (== '|') $ dropWhile (/= ':') line
+    mkCard (':':ns1, '|':ns2) = (parseNumbers ns1, parseNumbers ns2)
+
+parseNumbers :: String -> [Int]
+parseNumbers ns = read <$> words ns
 
 calcPoints :: Card -> Int
-calcPoints (winningNumbers, myNumbers) = if matches > 0 then 2^(matches - 1) else 0
-  where
-    matches = length $ intersect winningNumbers myNumbers
+calcPoints card = if matches card > 0 then 2^(matches card - 1) else 0
 
-process :: [(Integer, Card)] -> [(Integer, Card)]
-process cards = go cards [] []
-  where
-    go []                 processed _      = processed
-    go ((cnt, card):rest) processed (w:ws) = go rest ((cnt + w, card):processed) (redeem (cnt + w, card) `merge` ws)
-    go ((cnt, card):rest) processed _     = go rest ((cnt, card):processed) (redeem (cnt, card))
-    redeem (cnt, card) = replicate (calcPoints card) cnt
-    merge []   m    = m
-    merge t    []   = t
-    merge (t:ts) (m:ms) = (t + m):merge ts ms
+matches :: Card -> Int
+matches (winningNumbers, myNumbers) = length $ winningNumbers `intersect` myNumbers
+
+process :: [(Int, Card)] -> [(Int, Card)]
+process cards = process' cards []
+  where process' cards copies = case (cards, copies) of
+          ([],               _   ) -> []
+          ((cnt, card):rest, []  ) -> (cnt, card) : process' rest (redeem cnt card)
+          ((cnt, card):rest, c:cs) -> (cnt + c, card) : process' rest (redeem (cnt + c) card `add` cs)
+
+add :: [Int] -> [Int] -> [Int]
+add new old = case (new, old) of
+  ([],   os  ) -> os
+  (ns,   []  ) -> ns
+  (n:ns, o:os) -> (n + o) : add ns os
+
+redeem :: Int -> Card -> [Int]
+redeem cnt card = replicate (matches card) cnt
