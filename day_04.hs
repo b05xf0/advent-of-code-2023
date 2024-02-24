@@ -13,7 +13,6 @@ parse raw = (1, ) . mkCard . split <$> lines raw
   where
     split = break (== '|') . dropWhile (/= ':')
     mkCard (':':ns1, '|':ns2) = (parseNumbers ns1, parseNumbers ns2)
-    
 
 parseNumbers :: String -> [Int]
 parseNumbers ns = read <$> words ns
@@ -28,7 +27,7 @@ process :: [(Int, Card)] -> [(Int, Card)]
 process cards = process' cards []
   where process' cards copies = case (cards, copies) of
           ([],               _   ) -> []
-          ((cnt, card):rest, []  ) -> (cnt, card) : process' rest (redeem cnt card)
+          ((cnt, card):rest, []  ) -> (cnt,     card) : process' rest (redeem cnt card)
           ((cnt, card):rest, c:cs) -> (cnt + c, card) : process' rest (redeem (cnt + c) card `add` cs)
 
 add :: [Int] -> [Int] -> [Int]
