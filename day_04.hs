@@ -11,8 +11,9 @@ main = do
 parse :: String -> [(Int, Card)]
 parse raw = (1, ) . mkCard . split <$> lines raw
   where
-    split line = break (== '|') $ dropWhile (/= ':') line
+    split = break (== '|') . dropWhile (/= ':')
     mkCard (':':ns1, '|':ns2) = (parseNumbers ns1, parseNumbers ns2)
+    
 
 parseNumbers :: String -> [Int]
 parseNumbers ns = read <$> words ns
