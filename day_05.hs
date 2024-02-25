@@ -22,10 +22,13 @@ parse :: String -> ([Category], [Mapping])
 parse raw = parse' (words <$> lines raw) ([], []) 
   where 
     parse' src parsed = case (src, parsed) of
-      ([], parsed) -> parsed
-      ([]:rest, parsed) -> parse' rest parsed
-      (("seeds:":ss):rest, (seeds, mappings)) -> parse' rest (Seed . read <$> ss , mappings)
-      ((key:"map:":_):rest, (seeds, mappings)) -> parse' (dropWhile (/= []) rest) (seeds, parseMapping rest:mappings)
-      (_, parsed) -> parsed
+      ([]:rest, parsed)                        -> parse' rest parsed
+      (("seeds:":ss):rest, (seeds, mappings))  -> parse' rest (Seed . read <$> ss, mappings)
+      ((key:"map:":_):rest, (seeds, mappings)) -> parse' (dropWhile (/= []) rest) 
+                                                         (seeds, (key, parseMapping (takeWhile (/= []) rest)) : mappings)
+      (_, parsed)                              -> parsed
 
-parseMapping = undefined
+parseMapping :: [[String]] -> [(Int, Int, Int)]
+parseMapping src = case src of
+  [destFrom, srcFrom, len]:rest -> (read destFrom, read srcFrom, read len) : parseMapping rest
+  _                             -> []
