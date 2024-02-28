@@ -6,6 +6,12 @@ main = do
   let locations     = convert mappings <$> seeds
   putStrLn $ "d05p1: " <> show (minimum $ (\(Location id) -> id) <$> locations)
 
+type Start  = Int
+type Length = Int
+type Key    = String
+
+type Mapping = (Key, [(Start, Start, Length)])
+
 data Category = Seed Int
               | Soil Int
               | Fertilizer Int
@@ -16,17 +22,22 @@ data Category = Seed Int
               | Location Int
   deriving ( Show )
 
-type Mapping = (String, [[Int]])
-
 parse :: String -> ([Category], [Mapping])
 parse raw = parse' (words <$> lines raw) ([], [])
   where
     parse' src parsed = case (src, parsed) of
-      ([]:rest, parsed)                        -> parse' rest parsed
-      (("seeds:":ss):rest, (seeds, mappings))  -> parse' rest (Seed . read <$> ss, mappings)
-      ((key:"map:":_):rest, (seeds, mappings)) -> parse' (dropWhile (/= []) rest)
-                                                         (seeds, (key, map (read <$>) (takeWhile (/= []) rest)) : mappings)
-      (_, parsed)                              -> parsed
+      ([]:rest, parsed)
+        -> parse' rest parsed
+      (("seeds:":ss):rest, (seeds, mappings))
+        -> parse' rest (Seed . read <$> ss, mappings)
+      ((key:"map:":_):rest, (seeds, mappings))
+        -> parse' (dropWhile (/= []) rest) (seeds, (key, parseMappings (map (read <$>) (takeWhile (/= []) rest))) : mappings)
+      (_, parsed) -> parsed
+
+parseMappings :: [[Int]] -> [(Start, Start, Length)]
+parseMappings ms = case ms of
+  [startDest, startSrc, length]:rest -> (startDest, startSrc, length) : parseMappings rest
+  _                                  -> []
 
 convert :: [Mapping] -> Category -> Category
 convert mappings sth = case sth of
@@ -38,10 +49,10 @@ convert mappings sth = case sth of
   Temperature id -> convert mappings (Humidity (id `searchIn` "temperature-to-humidity"))
   Humidity id    -> Location (id `searchIn` "humidity-to-location") 
   where
-    searchIn id mappingKey = case [destFrom + id - srcFrom |
+    searchIn id mappingKey = case [startDest + id - startSrc |
                                      (key, mapping) <- mappings,
                                      key == mappingKey,
-                                     [destFrom, srcFrom, len] <- mapping,
-                                     id >= srcFrom && id < srcFrom + len] of
+                                     (startDest, startSrc, length) <- mapping,
+                                     id >= startSrc && id < startSrc + length] of
       [newId] -> newId
       _       -> id
