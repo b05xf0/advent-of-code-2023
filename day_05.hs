@@ -4,10 +4,7 @@ main :: IO ()
 main = do
   (seeds, mappings) <- parse <$> readFile "day_05_input.txt"
   let locations     = convert mappings <$> seeds
-      moreSeeds     = concat $ rangesToSeeds seeds
-      moreLocations = convert mappings <$> moreSeeds
   putStrLn $ "d05p1: " <> show (minimum $ (\(Location id) -> id) <$> locations)
-  putStrLn $ "d05p2: " <> show (minimum $ (\(Location id) -> id) <$> moreLocations)
 
 data Category = Seed Int
               | Soil Int
@@ -48,8 +45,3 @@ convert mappings sth = case sth of
                                      id >= srcFrom && id < srcFrom + len] of
       [newId] -> newId
       _       -> id
-
-rangesToSeeds :: [Category] -> [[Category]]
-rangesToSeeds ranges = case ranges of
-  Seed from:Seed len:rest -> (Seed <$> [from .. from + len - 1]) : rangesToSeeds rest
-  _                       -> []
